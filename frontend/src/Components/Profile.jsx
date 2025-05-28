@@ -6,6 +6,7 @@ import '../css/Profile.css';
 const Profile = () => {
   const navigate = useNavigate();
 
+  // 🔧 Reemplazá estos datos por los que obtengas del backend en Node.js más adelante
   const userData = {
     licensePlate: 'ABC123',
     fines: 2
@@ -48,7 +49,10 @@ const Profile = () => {
 
           <div className="profile-section">
             <h2>Account Settings</h2>
-            <button className="change-password-button" onClick={() => console.log('Change password clicked')}>
+            <button
+              className="change-password-button"
+              onClick={() => console.log('Change password clicked')}
+            >
               <FaLock /> Change Password
             </button>
           </div>
