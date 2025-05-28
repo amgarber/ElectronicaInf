@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaUser, FaEnvelope, FaLock, FaCar } from 'react-icons/fa';
 import '../css/Register.css';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = 'http://localhost:5000'; // Cambialo si usás otra IP o puerto
 
 const Register = () => {
   const navigate = useNavigate();
@@ -26,9 +26,8 @@ const Register = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    
+
     try {
-      console.log('Intentando registrar usuario...');
       const response = await fetch(`${API_URL}/api/register`, {
         method: 'POST',
         headers: { 
@@ -37,10 +36,8 @@ const Register = () => {
         },
         body: JSON.stringify(formData)
       });
-      
-      console.log('Respuesta recibida:', response.status);
+
       const data = await response.json();
-      console.log('Datos de respuesta:', data);
 
       if (!response.ok) {
         throw new Error(data.message || 'Error al registrar usuario');
@@ -48,7 +45,6 @@ const Register = () => {
 
       setSuccess(true);
     } catch (err) {
-      console.error('Error en el registro:', err);
       setError(err.message || 'Error al registrar usuario');
     } finally {
       setLoading(false);
@@ -61,10 +57,7 @@ const Register = () => {
         <div className="form-container success-container">
           <h2>¡Registro Exitoso!</h2>
           <p>Tu cuenta ha sido creada correctamente</p>
-          <button
-            onClick={() => navigate('/login')}
-            className="submit-button"
-          >
+          <button onClick={() => navigate('/login')} className="submit-button">
             Volver al Login
           </button>
         </div>
@@ -132,11 +125,7 @@ const Register = () => {
             required
           />
         </div>
-        <button
-          type="submit"
-          className="submit-button"
-          disabled={loading}
-        >
+        <button type="submit" className="submit-button" disabled={loading}>
           {loading ? 'Registrando...' : 'Registrarse'}
         </button>
         <p className="login-link">
