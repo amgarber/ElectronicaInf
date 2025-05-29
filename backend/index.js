@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 5050;
 require('dotenv').config(); // carga variables de entorno
 const pool = require('./db'); // conexión a PostgreSQL
 
-const entryRoutes = require('./Routes/entryRoutes');
+const entryRoutes = require('./Routes/EntryRoutes');
 const authRoutes = require('./Routes/AuthRoutes'); // rutas de autenticación
 
 
