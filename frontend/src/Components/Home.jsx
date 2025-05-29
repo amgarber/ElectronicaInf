@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   FaCar, FaBell, FaExclamationTriangle, FaKey, 
-  FaHome, FaList, FaUser, FaSignOutAlt, FaCheckCircle 
+  FaHome, FaList, FaUser, FaSignOutAlt, FaCheckCircle, FaArrowLeft 
 } from 'react-icons/fa';
 import '../css/Home.css';
 
@@ -125,7 +125,12 @@ const Home = () => {
       case 'notifications':
         return (
           <div className="notifications-section">
-            <h2>Notifications and Notices</h2>
+            <div className="section-header">
+              <button className="back-button" onClick={() => setCurrentView('home')}>
+                <FaArrowLeft /> Back
+              </button>
+              <h2>Notifications and Notices</h2>
+            </div>
             {loading ? (
               <div className="loading">Loading...</div>
             ) : notifications.length === 0 ? (
@@ -151,7 +156,12 @@ const Home = () => {
       case 'incidents':
         return (
           <div className="incidents-section">
-            <h2>Incidents</h2>
+            <div className="section-header">
+              <button className="back-button" onClick={() => setCurrentView('home')}>
+                <FaArrowLeft /> Back
+              </button>
+              <h2>Incidents</h2>
+            </div>
             {loading ? (
               <div className="loading">Loading...</div>
             ) : incidents.length === 0 ? (
