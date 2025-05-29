@@ -8,8 +8,8 @@ const API_URL = 'http://localhost:5050'; // Cambialo si usás otra IP o puerto
 const Register = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    nombre: '',
+    apellido: '',
     email: '',
     password: '',
   });
@@ -31,8 +31,8 @@ const Register = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          nombre: formData.firstName,
-          apellido: formData.lastName,
+          nombre: formData.nombre,
+          apellido: formData.apellido,
           email: formData.email,
           password: formData.password
         })
@@ -77,7 +77,7 @@ const Register = () => {
           <FaUser className="icon" />
           <input
             type="text"
-            name="firstName"
+            name="nombre"
             placeholder="Nombre"
             value={formData.firstName}
             onChange={handleChange}
@@ -88,7 +88,7 @@ const Register = () => {
           <FaUser className="icon" />
           <input
             type="text"
-            name="lastName"
+            name="apellido"
             placeholder="Apellido"
             value={formData.lastName}
             onChange={handleChange}
