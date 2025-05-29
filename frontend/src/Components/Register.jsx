@@ -12,7 +12,6 @@ const Register = () => {
     lastName: '',
     email: '',
     password: '',
-    licensePlate: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,12 +27,9 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/register`, {
+      const response = await fetch('http://localhost:5050/api/registrarUsuario', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
 
@@ -50,6 +46,7 @@ const Register = () => {
       setLoading(false);
     }
   };
+
 
   if (success) {
     return (
@@ -110,17 +107,6 @@ const Register = () => {
             name="password"
             placeholder="Contraseña"
             value={formData.password}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <FaCar className="icon" />
-          <input
-            type="text"
-            name="licensePlate"
-            placeholder="Placa del Vehículo"
-            value={formData.licensePlate}
             onChange={handleChange}
             required
           />
