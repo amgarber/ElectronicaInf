@@ -6,7 +6,10 @@ const PORT = process.env.PORT || 5050;
 
 require('dotenv').config(); // carga variables de entorno
 const pool = require('./db'); // conexión a PostgreSQL
+
+const entryRoutes = require('./routes/entryRoutes');
 const authRoutes = require('./Routes/AuthRoutes'); // rutas de autenticación
+
 
 app.use(cors());
 app.use(express.json());
@@ -18,6 +21,8 @@ app.get('/', (req, res) => {
 
 // Rutas principales
 app.use('/api', authRoutes);
+app.use('/api', entryRoutes);
+
 
 // Iniciar servidor
 app.listen(PORT, () => {
