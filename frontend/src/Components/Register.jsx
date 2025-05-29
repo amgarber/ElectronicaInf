@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaUser, FaEnvelope, FaLock, FaCar } from 'react-icons/fa';
 import '../css/Register.css';
 
-const API_URL = 'http://localhost:5000'; // Cambialo si usás otra IP o puerto
+const API_URL = 'http://localhost:5050'; // Cambialo si usás otra IP o puerto
 
 const Register = () => {
   const navigate = useNavigate();
@@ -12,7 +12,6 @@ const Register = () => {
     lastName: '',
     email: '',
     password: '',
-    licensePlate: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,14 +27,17 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/register`, {
+      const response = await fetch('http://localhost:5050/api/registrarUsuario', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(formData)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: formData.firstName,
+          apellido: formData.lastName,
+          email: formData.email,
+          password: formData.password
+        })
       });
+
 
       const data = await response.json();
 
@@ -50,6 +52,7 @@ const Register = () => {
       setLoading(false);
     }
   };
+
 
   if (success) {
     return (
@@ -110,17 +113,6 @@ const Register = () => {
             name="password"
             placeholder="Contraseña"
             value={formData.password}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <FaCar className="icon" />
-          <input
-            type="text"
-            name="licensePlate"
-            placeholder="Placa del Vehículo"
-            value={formData.licensePlate}
             onChange={handleChange}
             required
           />
