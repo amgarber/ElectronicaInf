@@ -6,7 +6,8 @@ import '../css/Register.css';
 /*
 const API_URL = 'http://localhost:5050'; // Cambialo si usás otra IP o puerto
 */
-const API_URL = 'http://54.243.184.8:5050';
+const API_URL = process.env.REACT_APP_API_URL;
+
 
 
 
