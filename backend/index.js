@@ -9,7 +9,7 @@ const pool = require('./db'); // conexión a PostgreSQL
 
 const entryRoutes = require('./Routes/EntryRoutes');
 const authRoutes = require('./Routes/AuthRoutes'); // rutas de autenticación
-
+const loginRoutes = require('./Routes/LoginRoutes');
 
 app.use(cors());
 app.use(express.json());
@@ -22,6 +22,7 @@ app.get('/', (req, res) => {
 // Rutas principales
 app.use('/api', authRoutes);
 app.use('/api', entryRoutes);
+app.use('/api', loginRoutes);
 
 
 // Iniciar servidor
