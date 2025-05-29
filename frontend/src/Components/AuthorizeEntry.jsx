@@ -28,7 +28,7 @@ const AuthorizeEntry = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('${API_URL}/api/authorize-entry', {
+      const response = await fetch(`${API_URL}/api/authorize-entry`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
