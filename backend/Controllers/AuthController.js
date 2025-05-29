@@ -1,15 +1,16 @@
 const pool = require('../db');
 
 const registrarUsuario = async (req, res) => {
-    const { nombre, email, password } = req.body;
-    if (!nombre || !lastname || !email || !password) {
+    const { nombre, apellido, email } = req.body;
+
+    if (!nombre || !apellido || !email) {
         return res.status(400).json({ error: 'Faltan datos obligatorios' });
     }
 
     try {
         const result = await pool.query(
-            'INSERT INTO usuarios (nombre, email, password) VALUES ($1, $2, $3) RETURNING *',
-            [nombre, email, password]
+            'INSERT INTO usuarios (nombre, apellido, email) VALUES ($1, $2, $3) RETURNING *',
+            [nombre, apellido, email]
         );
         res.status(201).json({ message: 'Usuario creado', usuario: result.rows[0] });
     } catch (err) {
