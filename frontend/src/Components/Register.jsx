@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaUser, FaEnvelope, FaLock, FaCar } from 'react-icons/fa';
 import '../css/Register.css';
 
-const API_URL = 'http://localhost:5000'; // Cambialo si usás otra IP o puerto
+const API_URL = 'http://localhost:5050'; // Cambialo si usás otra IP o puerto
 
 const Register = () => {
   const navigate = useNavigate();
@@ -30,8 +30,14 @@ const Register = () => {
       const response = await fetch('http://localhost:5050/api/registrarUsuario', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          nombre: formData.firstName,
+          apellido: formData.lastName,
+          email: formData.email,
+          password: formData.password
+        })
       });
+
 
       const data = await response.json();
 
