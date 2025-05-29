@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaCar } from 'react-icons/fa';
 import '../css/AuthorizeEntry.css';
 
+const API_URL = process.env.REACT_APP_API_URL;
+
 const AuthorizeEntry = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -26,7 +28,7 @@ const AuthorizeEntry = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5050/api/authorize-entry', {
+      const response = await fetch('${API_URL}/api/authorize-entry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
