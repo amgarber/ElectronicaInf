@@ -107,31 +107,56 @@ async function verificarAutorizacion(patente) {
     }
 }
 
+async function registrarInfraccion(descripcion) {
+    const client = new Client(dbConfig);
+    try {
+        await client.connect();
+        await client.query(
+            'INSERT INTO infracciones (descripcion, tipo) VALUES ($1, $2)',
+            [descripcion, 'velocidad']
+        );
+        console.log('📝 Infracción registrada en la base de datos');
+        await client.end();
+    } catch (err) {
+        console.error('❌ Error al guardar infracción:', err);
+    }
+}
+
 // === MQTT LISTENER ===
 const client = mqtt.connect(MQTT_BROKER);
 
 client.on('connect', () => {
     console.log(`🚀 Conectado al broker. Escuchando en ${MQTT_TOPIC_SUB}`);
     client.subscribe(MQTT_TOPIC_SUB);
+    client.subscribe('infraccion/velocidad'); // nueva suscripción
 });
 
 client.on('message', async (topic, message) => {
-    console.log('📥 Imagen recibida por MQTT');
+    const payload = message.toString();
 
-    try {
-        await guardarImagen(message.toString());
-        const timestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 15);
-        const s3Key = `capturas/${timestamp}.jpg`;
+    if (topic === MQTT_TOPIC_SUB) {
+        console.log('📥 Imagen recibida por MQTT');
 
-        const key = await subirImagenAS3(s3Key);
-        if (!key) return;
+        try {
+            await guardarImagen(payload);
+            const timestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 15);
+            const s3Key = `capturas/${timestamp}.jpg`;
 
-        const patente = await detectarPatenteConRekognition(key);
-        const resultado = patente === 'NO_DETECTADA' ? 'false' : await verificarAutorizacion(patente);
+            const key = await subirImagenAS3(s3Key);
+            if (!key) return;
 
-        console.log('📡 Publicando resultado:', resultado);
-        client.publish(MQTT_TOPIC_PUB, resultado);
-    } catch (err) {
-        console.error('❌ Error procesando mensaje:', err);
+            const patente = await detectarPatenteConRekognition(key);
+            const resultado = patente === 'NO_DETECTADA' ? 'false' : await verificarAutorizacion(patente);
+
+            console.log('📡 Publicando resultado:', resultado);
+            client.publish(MQTT_TOPIC_PUB, resultado);
+        } catch (err) {
+            console.error('❌ Error procesando imagen:', err);
+        }
+    }
+
+    if (topic === 'infraccion/velocidad') {
+        console.log('⚠️ Infracción de velocidad recibida:', payload);
+        await registrarInfraccion(payload);
     }
 });
