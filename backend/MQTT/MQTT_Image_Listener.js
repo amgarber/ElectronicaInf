@@ -158,7 +158,6 @@ async function registrarInfraccionConPatente(patente) {
     }
 }
 
-
 // === MQTT CLIENT ===
 const client = mqtt.connect(MQTT_BROKER);
 
