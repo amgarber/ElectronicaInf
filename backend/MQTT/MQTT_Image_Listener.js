@@ -113,14 +113,10 @@ async function registrarInfraccionConPatente(patente) {
     try {
         await client.connect();
 
-        const tabla = 'vehiculos';
-        if (tabla !== 'vehiculos') throw new Error('Tabla no permitida');
-
-        await client.query(
-            'SELECT dueno_usuario_id, dueno_autorizado_id FROM ${tabla} WHERE patente = $1',
+        const { rows } = await client.query(
+            'SELECT dueno_usuario_id, dueno_autorizado_id FROM vehiculos WHERE patente = $1',
             [patente]
         );
-
 
         if (rows.length === 0) {
             console.warn('❌ Patente no registrada en la base');
