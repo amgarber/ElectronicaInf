@@ -4,29 +4,32 @@ const path = require('path');
 const { Client } = require('pg');
 const AWS = require('aws-sdk');
 
-
+// === CONFIGURACIÓN GENERAL ===
 const MQTT_BROKER = 'mqtt://54.243.184.8';
 const MQTT_TOPIC_SUB = 'patentes/captura';
 const MQTT_TOPIC_PUB = 'acceso/autorizado';
 const IMAGE_PATH = path.join(__dirname, 'captura.jpg');
 const BUCKET_NAME = 'esp32-captures';
 
-
+// === CONFIGURACIÓN POSTGRES ===
 const dbConfig = {
     host: '172.31.25.254',
-    database: 'control_accesos',
+    database: 'accesscontrol',
     user: 'postgres',
     password: 'postgres',
     port: 5432,
 };
 
+// === AWS CONFIG ===
 AWS.config.update({ region: 'us-east-1' });
 const rekognition = new AWS.Rekognition();
 const s3 = new AWS.S3();
 
+// === VARIABLES DE ESTADO ===
 let ultimaPatenteDetectada = null;
 let tiempoPatenteDetectada = null;
 
+// === FUNCIONES AUXILIARES ===
 function guardarImagen(base64Data) {
     return new Promise((resolve, reject) => {
         const buffer = Buffer.from(base64Data, 'base64');
@@ -92,10 +95,24 @@ async function verificarAutorizacion(patente) {
     const client = new Client(dbConfig);
     try {
         await client.connect();
-        const res = await client.query('SELECT autorizado FROM vehiculos WHERE patente = $1', [patente]);
+        const res = await client.query(
+            'SELECT autorizado, bloqueado FROM vehiculos WHERE patente = $1',
+            [patente]
+        );
         await client.end();
-        const autorizado = res.rows[0]?.autorizado;
-        if (autorizado === true) {
+
+        const row = res.rows[0];
+        if (!row) {
+            console.log('⛔ Patente no registrada');
+            return 'false';
+        }
+
+        if (row.bloqueado === true) {
+            console.log('🚫 Patente bloqueada por infracciones');
+            return 'false';
+        }
+
+        if (row.autorizado === true) {
             console.log('✅ Patente autorizada');
             return 'true';
         } else {
@@ -119,14 +136,14 @@ async function registrarInfraccionConPatente(patente) {
         );
 
         if (rows.length === 0) {
-            console.warn('❌ Patente no registrada en la base');
             await client.query(
                 'INSERT INTO infracciones (descripcion, tipo, patente, fecha_hora) VALUES ($1, $2, $3, NOW())',
                 [`Exceso de velocidad - patente desconocida (${patente})`, 'velocidad', patente]
             );
+            console.warn('❌ Patente no registrada en la base');
         } else {
-            const id_usuario = rows[0].dueno_usuario_id;
-            const id_autorizado = rows[0].dueno_autorizado_id;
+            const id_usuario = rows[0]["dueno_usuario_id"];
+            const id_autorizado = rows[0]["dueno_autorizado_id"];
 
             if (id_usuario !== null) {
                 await client.query(
@@ -146,6 +163,19 @@ async function registrarInfraccionConPatente(patente) {
                     ['Exceso de velocidad - sin dueño asociado', 'velocidad', patente]
                 );
                 console.warn('⚠️ Vehículo sin dueño asociado en la base');
+            }
+
+            // 🚫 Bloqueo automático si supera 3 infracciones
+            const infracciones = await client.query(
+                'SELECT COUNT(*) FROM infracciones WHERE patente = $1',
+                [patente]
+            );
+            if (parseInt(infracciones.rows[0].count) >= 3) {
+                await client.query(
+                    'UPDATE vehiculos SET bloqueado = true WHERE patente = $1',
+                    [patente]
+                );
+                console.warn(`🚫 Patente ${patente} bloqueada por exceso de infracciones`);
             }
         }
 
