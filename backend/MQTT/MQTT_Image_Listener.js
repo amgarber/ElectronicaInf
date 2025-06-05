@@ -121,6 +121,7 @@ async function registrarInfraccionConPatente(patente) {
             [patente]
         );
 
+
         if (rows.length === 0) {
             console.warn('❌ Patente no registrada en la base');
             await client.query(
@@ -128,7 +129,7 @@ async function registrarInfraccionConPatente(patente) {
                 [`Exceso de velocidad - patente desconocida (${patente})`, 'velocidad', patente]
             );
         } else {
-            const id_usuario = rows[0]["dueno_usuario_id"];
+            const id_usuario = rows[0].dueno_usuario_id;
             const id_autorizado = rows[0]["dueño_autorizado_id"];
 
             if (id_usuario !== null) {
