@@ -117,7 +117,7 @@ async function registrarInfraccionConPatente(patente) {
         if (tabla !== 'vehiculos') throw new Error('Tabla no permitida');
 
         await client.query(
-            `SELECT dueno_usuario_id, dueno_autorizado_id FROM ${tabla} WHERE patente = $1`,
+            'SELECT dueno_usuario_id, dueno_autorizado_id FROM ${tabla} WHERE patente = $1',
             [patente]
         );
 
@@ -125,7 +125,7 @@ async function registrarInfraccionConPatente(patente) {
         if (rows.length === 0) {
             console.warn('❌ Patente no registrada en la base');
             await client.query(
-                `INSERT INTO infracciones (descripcion, tipo, patente, fecha_hora) VALUES ($1, $2, $3, NOW())`,
+                'INSERT INTO infracciones (descripcion, tipo, patente, fecha_hora) VALUES ($1, $2, $3, NOW())',
                 [`Exceso de velocidad - patente desconocida (${patente})`, 'velocidad', patente]
             );
         } else {
@@ -134,19 +134,19 @@ async function registrarInfraccionConPatente(patente) {
 
             if (id_usuario !== null) {
                 await client.query(
-                    `INSERT INTO infracciones (id_usuario, descripcion, tipo, patente, fecha_hora) VALUES ($1, $2, $3, $4, NOW())`,
+                    'INSERT INTO infracciones (id_usuario, descripcion, tipo, patente, fecha_hora) VALUES ($1, $2, $3, $4, NOW())',
                     [id_usuario, 'Exceso de velocidad', 'velocidad', patente]
                 );
                 console.log(`📝 Infracción registrada para usuario ID ${id_usuario}`);
             } else if (id_autorizado !== null) {
                 await client.query(
-                    `INSERT INTO infracciones (descripcion, tipo, patente, fecha_hora) VALUES ($1, $2, $3, NOW())`,
+                    'INSERT INTO infracciones (descripcion, tipo, patente, fecha_hora) VALUES ($1, $2, $3, NOW())',
                     [`Exceso de velocidad - persona autorizada ID ${id_autorizado}`, 'velocidad', patente]
                 );
                 console.log(`📝 Infracción registrada para persona autorizada ID ${id_autorizado}`);
             } else {
                 await client.query(
-                    `INSERT INTO infracciones (descripcion, tipo, patente, fecha_hora) VALUES ($1, $2, $3, NOW())`,
+                    'INSERT INTO infracciones (descripcion, tipo, patente, fecha_hora) VALUES ($1, $2, $3, NOW())',
                     ['Exceso de velocidad - sin dueño asociado', 'velocidad', patente]
                 );
                 console.warn('⚠️ Vehículo sin dueño asociado en la base');
