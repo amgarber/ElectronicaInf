@@ -117,7 +117,7 @@ async function registrarInfraccionConPatente(patente) {
         await client.connect();
 
         const { rows } = await client.query(
-            'SELECT dueno_usuario_id, "dueño_autorizado_id" FROM vehiculos WHERE patente = $1',
+            'SELECT "dueno_usuario_id", "dueño_autorizado_id" FROM vehiculos WHERE patente = $1',
             [patente]
         );
 
@@ -128,7 +128,7 @@ async function registrarInfraccionConPatente(patente) {
                 [`Exceso de velocidad - patente desconocida (${patente})`, 'velocidad', patente]
             );
         } else {
-            const id_usuario = rows[0].dueno_usuario_id;
+            const id_usuario = rows[0]["dueno_usuario_id"];
             const id_autorizado = rows[0]["dueño_autorizado_id"];
 
             if (id_usuario !== null) {
@@ -157,6 +157,7 @@ async function registrarInfraccionConPatente(patente) {
         console.error('❌ Error al guardar infracción:', err);
     }
 }
+
 
 // === MQTT CLIENT ===
 const client = mqtt.connect(MQTT_BROKER);
