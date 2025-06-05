@@ -117,10 +117,9 @@ async function registrarInfraccionConPatente(patente) {
         await client.connect();
 
         const { rows } = await client.query(
-            'SELECT "dueno_usuario_id", "dueño_autorizado_id" FROM vehiculos WHERE patente = $1',
+            'SELECT dueno_usuario_id, dueno_autorizado_id FROM vehiculos WHERE patente = $1',
             [patente]
         );
-
 
         if (rows.length === 0) {
             console.warn('❌ Patente no registrada en la base');
@@ -129,8 +128,8 @@ async function registrarInfraccionConPatente(patente) {
                 [`Exceso de velocidad - patente desconocida (${patente})`, 'velocidad', patente]
             );
         } else {
-            const id_usuario = rows[0].dueno_usuario_id;
-            const id_autorizado = rows[0]["dueño_autorizado_id"];
+            const id_usuario = rows[0]["dueno_usuario_id"];
+            const id_autorizado = rows[0]["dueno_autorizado_id"];
 
             if (id_usuario !== null) {
                 await client.query(
