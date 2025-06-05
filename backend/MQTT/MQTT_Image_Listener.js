@@ -4,14 +4,14 @@ const path = require('path');
 const { Client } = require('pg');
 const AWS = require('aws-sdk');
 
-// === CONFIGURACIÓN GENERAL ===
+
 const MQTT_BROKER = 'mqtt://54.243.184.8';
 const MQTT_TOPIC_SUB = 'patentes/captura';
 const MQTT_TOPIC_PUB = 'acceso/autorizado';
 const IMAGE_PATH = path.join(__dirname, 'captura.jpg');
 const BUCKET_NAME = 'esp32-captures';
 
-// === CONFIGURACIÓN POSTGRES ===
+
 const dbConfig = {
     host: '172.31.25.254',
     database: 'accesscontrol',
@@ -20,16 +20,13 @@ const dbConfig = {
     port: 5432,
 };
 
-// === AWS CONFIG ===
 AWS.config.update({ region: 'us-east-1' });
 const rekognition = new AWS.Rekognition();
 const s3 = new AWS.S3();
 
-// === VARIABLES DE ESTADO ===
 let ultimaPatenteDetectada = null;
 let tiempoPatenteDetectada = null;
 
-// === FUNCIONES AUXILIARES ===
 function guardarImagen(base64Data) {
     return new Promise((resolve, reject) => {
         const buffer = Buffer.from(base64Data, 'base64');
@@ -116,9 +113,14 @@ async function registrarInfraccionConPatente(patente) {
     try {
         await client.connect();
 
-        const { rows } = await client.query(
-            'SELECT dueno_usuario_id, dueno_autorizado_id FROM vehiculos WHERE patente = $1'
+        const tabla = 'vehiculos';
+        if (tabla !== 'vehiculos') throw new Error('Tabla no permitida');
+
+        await client.query(
+            `SELECT dueno_usuario_id, dueno_autorizado_id FROM ${tabla} WHERE patente = $1`,
+            [patente]
         );
+
 
         if (rows.length === 0) {
             console.warn('❌ Patente no registrada en la base');
