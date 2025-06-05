@@ -117,9 +117,10 @@ async function registrarInfraccionConPatente(patente) {
         await client.connect();
 
         const { rows } = await client.query(
-            'SELECT id_usuario FROM vehiculos WHERE patente = $1',
+            'SELECT dueño_usuario_id FROM vehiculos WHERE patente = $1',
             [patente]
         );
+
 
         if (rows.length === 0) {
             console.warn('❌ No se encontró usuario para la patente');
@@ -128,7 +129,7 @@ async function registrarInfraccionConPatente(patente) {
                 [`Exceso de velocidad - patente no registrada (${patente})`, 'velocidad', patente]
             );
         } else {
-            const id_usuario = rows[0].id_usuario;
+            const id_usuario = rows[0].dueño_usuario_id;
             await client.query(
                 'INSERT INTO infracciones (id_usuario, descripcion, tipo, patente, fecha) VALUES ($1, $2, $3, $4, NOW())',
                 [id_usuario, 'Exceso de velocidad', 'velocidad', patente]
