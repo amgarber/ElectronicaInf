@@ -25,6 +25,10 @@ AWS.config.update({ region: 'us-east-1' });
 const rekognition = new AWS.Rekognition();
 const s3 = new AWS.S3();
 
+// === VARIABLES DE ESTADO ===
+let ultimaPatenteDetectada = null;
+let tiempoPatenteDetectada = null;
+
 // === FUNCIONES AUXILIARES ===
 function guardarImagen(base64Data) {
     return new Promise((resolve, reject) => {
@@ -107,28 +111,44 @@ async function verificarAutorizacion(patente) {
     }
 }
 
-async function registrarInfraccion(descripcion) {
+async function registrarInfraccionConPatente(patente) {
     const client = new Client(dbConfig);
     try {
         await client.connect();
-        await client.query(
-            'INSERT INTO infracciones (descripcion, tipo) VALUES ($1, $2)',
-            [descripcion, 'velocidad']
+
+        const { rows } = await client.query(
+            'SELECT id_usuario FROM vehiculos WHERE patente = $1',
+            [patente]
         );
-        console.log('📝 Infracción registrada en la base de datos');
+
+        if (rows.length === 0) {
+            console.warn('❌ No se encontró usuario para la patente');
+            await client.query(
+                'INSERT INTO infracciones (descripcion, tipo, patente, fecha) VALUES ($1, $2, $3, NOW())',
+                [`Exceso de velocidad - patente no registrada (${patente})`, 'velocidad', patente]
+            );
+        } else {
+            const id_usuario = rows[0].id_usuario;
+            await client.query(
+                'INSERT INTO infracciones (id_usuario, descripcion, tipo, patente, fecha) VALUES ($1, $2, $3, $4, NOW())',
+                [id_usuario, 'Exceso de velocidad', 'velocidad', patente]
+            );
+        }
+
+        console.log('📝 Infracción registrada correctamente');
         await client.end();
     } catch (err) {
         console.error('❌ Error al guardar infracción:', err);
     }
 }
 
-// === MQTT LISTENER ===
+// === MQTT CLIENT ===
 const client = mqtt.connect(MQTT_BROKER);
 
 client.on('connect', () => {
     console.log(`🚀 Conectado al broker. Escuchando en ${MQTT_TOPIC_SUB}`);
     client.subscribe(MQTT_TOPIC_SUB);
-    client.subscribe('infraccion/velocidad'); // nueva suscripción
+    client.subscribe('infraccion/velocidad');
 });
 
 client.on('message', async (topic, message) => {
@@ -146,7 +166,14 @@ client.on('message', async (topic, message) => {
             if (!key) return;
 
             const patente = await detectarPatenteConRekognition(key);
-            const resultado = patente === 'NO_DETECTADA' ? 'false' : await verificarAutorizacion(patente);
+
+            let resultado = 'false';
+            if (patente !== 'NO_DETECTADA') {
+                ultimaPatenteDetectada = patente;
+                tiempoPatenteDetectada = Date.now();
+                client.publish('patente/detectada', patente);
+                resultado = await verificarAutorizacion(patente);
+            }
 
             console.log('📡 Publicando resultado:', resultado);
             client.publish(MQTT_TOPIC_PUB, resultado);
@@ -157,6 +184,14 @@ client.on('message', async (topic, message) => {
 
     if (topic === 'infraccion/velocidad') {
         console.log('⚠️ Infracción de velocidad recibida:', payload);
-        await registrarInfraccion(payload);
+
+        if (
+            ultimaPatenteDetectada &&
+            Date.now() - tiempoPatenteDetectada < 20000
+        ) {
+            await registrarInfraccionConPatente(ultimaPatenteDetectada);
+        } else {
+            await registrarInfraccionConPatente('DESCONOCIDA');
+        }
     }
 });
