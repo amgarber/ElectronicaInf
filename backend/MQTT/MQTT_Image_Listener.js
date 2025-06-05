@@ -14,7 +14,7 @@ const BUCKET_NAME = 'esp32-captures';
 // === CONFIGURACIÓN POSTGRES ===
 const dbConfig = {
     host: '172.31.25.254',
-    database: 'accesscontrol',
+    database: 'control_acceso',
     user: 'postgres',
     password: 'postgres',
     port: 5432,
