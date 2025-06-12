@@ -48,16 +48,18 @@ const autorizarEntrada = async (req, res) => {
 
         // Insertar vehículo (si no existe)
         const vehiculoInsert = await pool.query(
-            `INSERT INTO vehiculos (marca, modelo, patente, dueño_autorizado_id, autorizado)
-             VALUES ($1, $2, $3, $4, $5)
-             ON CONFLICT (patente) DO UPDATE
-             SET marca = EXCLUDED.marca,
-                 modelo = EXCLUDED.modelo,
-                 dueño_autorizado_id = EXCLUDED.dueño_autorizado_id,
-                 autorizado = true
-             RETURNING *`,
+            `INSERT INTO vehiculos (marca, modelo, patente, dueño_autorizado_id, dueño_usuario_id, autorizado)
+             VALUES ($1, $2, $3, $4, NULL, $5)
+                 ON CONFLICT (patente) DO UPDATE
+                                              SET marca = EXCLUDED.marca,
+                                              modelo = EXCLUDED.modelo,
+                                              dueño_autorizado_id = EXCLUDED.dueño_autorizado_id,
+                                              dueño_usuario_id = NULL,
+                                              autorizado = true
+                                              RETURNING *`,
             [marca, modelo, patente, personaId, true]
         );
+
 
         res.status(201).json({
             message: 'Entrada autorizada con éxito',
