@@ -8,8 +8,6 @@ import '../css/Home.css';
 import Notifications from './Notifications';
 import MyAuthorizations from './MyAuthorizations';
 
-
-
 const API_URL = process.env.REACT_APP_API_URL;
 
 const Home = () => {
