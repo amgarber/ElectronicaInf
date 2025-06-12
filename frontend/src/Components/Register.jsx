@@ -75,23 +75,23 @@ const Register = () => {
         <div className="form-group">
           <FaUser className="icon" />
           <input
-            type="text"
-            name="nombre"
-            placeholder="Nombre"
-            value={formData.firstName}
-            onChange={handleChange}
-            required
+              type="text"
+              name="nombre"
+              placeholder="Nombre"
+              value={formData.nombre}
+              onChange={handleChange}
+              required
           />
         </div>
         <div className="form-group">
           <FaUser className="icon" />
           <input
-            type="text"
-            name="apellido"
-            placeholder="Apellido"
-            value={formData.lastName}
-            onChange={handleChange}
-            required
+              type="text"
+              name="apellido"
+              placeholder="Apellido"
+              value={formData.apellido}
+              onChange={handleChange}
+              required
           />
         </div>
         <div className="form-group">
