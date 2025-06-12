@@ -2,12 +2,11 @@
 
 # Levantar Backend
 cd ~/ElectronicaInf/backend
-npm install
-nohup npm start > backend.log 2>&1 &
+nohup node index.prod.js > ../backend.log 2>&1 &
 
-# Levantar Frontend (ya debe estar compilado)
+# Levantar Frontend en modo desarrollo (React Dev Server)
 cd ~/ElectronicaInf/frontend
-nohup serve -s build -l 3000 > frontend.log 2>&1 &
+nohup npm start > ../frontend.log 2>&1 &
 
 # Levantar Listener MQTT
 cd ~/ElectronicaInf
