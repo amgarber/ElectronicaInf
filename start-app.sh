@@ -10,4 +10,4 @@ nohup npm start > ../frontend.log 2>&1 &
 
 # Levantar Listener MQTT
 cd ~/ElectronicaInf
-nohup node mqtt_image_listener.js > mqtt.log 2>&1 &
+nohup node MQTT_Image_Listener.js > mqtt.log 2>&1 &
