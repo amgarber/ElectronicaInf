@@ -27,6 +27,7 @@ const Register = () => {
     setLoading(true);
 
     try {
+      console.log("API_URL usado:", API_URL);
       const response = await fetch(`${API_URL}/api/registrarUsuario`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

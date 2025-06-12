@@ -1,64 +1,86 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaLock, FaCar, FaExclamationTriangle } from 'react-icons/fa';
+import { FaArrowLeft, FaLock, FaUser } from 'react-icons/fa';
 import '../css/Profile.css';
+
+const API_URL = process.env.REACT_APP_API_URL;
 
 const Profile = () => {
   const navigate = useNavigate();
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // 🔧 Reemplazá estos datos por los que obtengas del backend en Node.js más adelante
-  const userData = {
-    licensePlate: 'ABC123',
-    fines: 2
-  };
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) throw new Error('No hay sesión activa');
+
+        const res = await fetch(`${API_URL}/api/profile`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al obtener perfil');
+
+        setUserData(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   return (
-    <div className="container">
-      <header className="header">
-        <div className="header-left">
-          <button className="back-button" onClick={() => navigate('/home')}>
-            <FaArrowLeft /> Back
-          </button>
-        </div>
-        <div className="header-right">
-          <h1>Profile</h1>
-        </div>
-      </header>
-
-      <main className="main">
-        <div className="profile-container">
-          <div className="profile-section">
-            <h2>Vehicle Information</h2>
-            <div className="info-card">
-              <div className="info-item">
-                <FaCar className="info-icon" />
-                <div className="info-content">
-                  <span className="info-label">License Plate</span>
-                  <span className="info-value">{userData.licensePlate}</span>
-                </div>
-              </div>
-              <div className="info-item">
-                <FaExclamationTriangle className="info-icon" />
-                <div className="info-content">
-                  <span className="info-label">Active Fines</span>
-                  <span className="info-value">{userData.fines}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="profile-section">
-            <h2>Account Settings</h2>
-            <button
-              className="change-password-button"
-              onClick={() => console.log('Change password clicked')}
-            >
-              <FaLock /> Change Password
+      <div className="container">
+        <header className="header">
+          <div className="header-left">
+            <button className="back-button" onClick={() => navigate('/home')}>
+              <FaArrowLeft /> Back
             </button>
           </div>
-        </div>
-      </main>
-    </div>
+          <div className="header-right">
+            <h1>Profile</h1>
+          </div>
+        </header>
+
+        <main className="main">
+          <div className="profile-container">
+            {loading ? (
+                <p>Loading...</p>
+            ) : error ? (
+                <div className="error-message">{error}</div>
+            ) : userData ? (
+                <>
+                  <div className="profile-section">
+                    <h2><FaUser /> Account Info</h2>
+                    <div className="info-card">
+                      <p><strong>Name:</strong> {userData.nombre} {userData.apellido}</p>
+                      <p><strong>Email:</strong> {userData.email}</p>
+                    </div>
+                  </div>
+
+                  <div className="profile-section">
+                    <h2>Account Settings</h2>
+                    <button
+                        className="change-password-button"
+                        onClick={() => console.log('Change password clicked')}
+                    >
+                      <FaLock /> Change Password
+                    </button>
+                  </div>
+                </>
+            ) : null}
+          </div>
+        </main>
+      </div>
   );
 };
 

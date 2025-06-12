@@ -14,7 +14,7 @@ const BUCKET_NAME = 'esp32-captures';
 // === CONFIGURACIÓN POSTGRES ===
 const dbConfig = {
     host: '172.31.25.254',
-    database: 'accesscontrol',
+    database: 'control_acceso',
     user: 'postgres',
     password: 'postgres',
     port: 5432,
@@ -24,6 +24,10 @@ const dbConfig = {
 AWS.config.update({ region: 'us-east-1' });
 const rekognition = new AWS.Rekognition();
 const s3 = new AWS.S3();
+
+// === VARIABLES DE ESTADO ===
+let ultimaPatenteDetectada = null;
+let tiempoPatenteDetectada = null;
 
 // === FUNCIONES AUXILIARES ===
 function guardarImagen(base64Data) {
@@ -91,10 +95,24 @@ async function verificarAutorizacion(patente) {
     const client = new Client(dbConfig);
     try {
         await client.connect();
-        const res = await client.query('SELECT autorizado FROM vehiculos WHERE patente = $1', [patente]);
+        const res = await client.query(
+            'SELECT autorizado, bloqueado FROM vehiculos WHERE patente = $1',
+            [patente]
+        );
         await client.end();
-        const autorizado = res.rows[0]?.autorizado;
-        if (autorizado === true) {
+
+        const row = res.rows[0];
+        if (!row) {
+            console.log('⛔ Patente no registrada');
+            return 'false';
+        }
+
+        if (row.bloqueado === true) {
+            console.log('🚫 Patente bloqueada por infracciones');
+            return 'false';
+        }
+
+        if (row.autorizado === true) {
             console.log('✅ Patente autorizada');
             return 'true';
         } else {
@@ -107,28 +125,73 @@ async function verificarAutorizacion(patente) {
     }
 }
 
-async function registrarInfraccion(descripcion) {
+async function registrarInfraccionConPatente(patente) {
     const client = new Client(dbConfig);
     try {
         await client.connect();
-        await client.query(
-            'INSERT INTO infracciones (descripcion, tipo) VALUES ($1, $2)',
-            [descripcion, 'velocidad']
+
+        const { rows } = await client.query(
+            'SELECT dueno_usuario_id, dueno_autorizado_id FROM vehiculos WHERE patente = $1',
+            [patente]
         );
-        console.log('📝 Infracción registrada en la base de datos');
+
+        if (rows.length === 0) {
+            await client.query(
+                'INSERT INTO infracciones (descripcion, tipo, patente, fecha_hora) VALUES ($1, $2, $3, NOW())',
+                [`Exceso de velocidad - patente desconocida (${patente})`, 'velocidad', patente]
+            );
+            console.warn('❌ Patente no registrada en la base');
+        } else {
+            const id_usuario = rows[0]["dueno_usuario_id"];
+            const id_autorizado = rows[0]["dueno_autorizado_id"];
+
+            if (id_usuario !== null) {
+                await client.query(
+                    'INSERT INTO infracciones (id_usuario, descripcion, tipo, patente, fecha_hora) VALUES ($1, $2, $3, $4, NOW())',
+                    [id_usuario, 'Exceso de velocidad', 'velocidad', patente]
+                );
+                console.log(`📝 Infracción registrada para usuario ID ${id_usuario}`);
+            } else if (id_autorizado !== null) {
+                await client.query(
+                    'INSERT INTO infracciones (descripcion, tipo, patente, fecha_hora) VALUES ($1, $2, $3, NOW())',
+                    [`Exceso de velocidad - persona autorizada ID ${id_autorizado}`, 'velocidad', patente]
+                );
+                console.log(`📝 Infracción registrada para persona autorizada ID ${id_autorizado}`);
+            } else {
+                await client.query(
+                    'INSERT INTO infracciones (descripcion, tipo, patente, fecha_hora) VALUES ($1, $2, $3, NOW())',
+                    ['Exceso de velocidad - sin dueño asociado', 'velocidad', patente]
+                );
+                console.warn('⚠️ Vehículo sin dueño asociado en la base');
+            }
+
+            // 🚫 Bloqueo automático si supera 3 infracciones
+            const infracciones = await client.query(
+                'SELECT COUNT(*) FROM infracciones WHERE patente = $1',
+                [patente]
+            );
+            if (parseInt(infracciones.rows[0].count) >= 3) {
+                await client.query(
+                    'UPDATE vehiculos SET bloqueado = true WHERE patente = $1',
+                    [patente]
+                );
+                console.warn(`🚫 Patente ${patente} bloqueada por exceso de infracciones`);
+            }
+        }
+
         await client.end();
     } catch (err) {
         console.error('❌ Error al guardar infracción:', err);
     }
 }
 
-// === MQTT LISTENER ===
+// === MQTT CLIENT ===
 const client = mqtt.connect(MQTT_BROKER);
 
 client.on('connect', () => {
     console.log(`🚀 Conectado al broker. Escuchando en ${MQTT_TOPIC_SUB}`);
     client.subscribe(MQTT_TOPIC_SUB);
-    client.subscribe('infraccion/velocidad'); // nueva suscripción
+    client.subscribe('infraccion/velocidad');
 });
 
 client.on('message', async (topic, message) => {
@@ -146,7 +209,14 @@ client.on('message', async (topic, message) => {
             if (!key) return;
 
             const patente = await detectarPatenteConRekognition(key);
-            const resultado = patente === 'NO_DETECTADA' ? 'false' : await verificarAutorizacion(patente);
+
+            let resultado = 'false';
+            if (patente !== 'NO_DETECTADA') {
+                ultimaPatenteDetectada = patente;
+                tiempoPatenteDetectada = Date.now();
+                client.publish('patente/detectada', patente);
+                resultado = await verificarAutorizacion(patente);
+            }
 
             console.log('📡 Publicando resultado:', resultado);
             client.publish(MQTT_TOPIC_PUB, resultado);
@@ -157,6 +227,14 @@ client.on('message', async (topic, message) => {
 
     if (topic === 'infraccion/velocidad') {
         console.log('⚠️ Infracción de velocidad recibida:', payload);
-        await registrarInfraccion(payload);
+
+        if (
+            ultimaPatenteDetectada &&
+            Date.now() - tiempoPatenteDetectada < 20000
+        ) {
+            await registrarInfraccionConPatente(ultimaPatenteDetectada);
+        } else {
+            await registrarInfraccionConPatente('DESCONOCIDA');
+        }
     }
 });

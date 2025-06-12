@@ -14,8 +14,8 @@ const Welcome = () => {
       </div>
       <p className="welcome-text">Welcome to DriveIn - Your smart parking solution!</p>
       <div className="button-group">
-        <button onClick={() => navigate('/login')}>Login</button>
-        <button onClick={() => navigate('/register')}>Register</button>
+        <button className="Button1" onClick={() => navigate('/login')}>Login</button>
+        <button  className="Button1" onClick={() => navigate('/register')}>Register</button>
       </div>
     </div>
   );

@@ -27,16 +27,27 @@ const AuthorizeEntry = () => {
     setError('');
     setLoading(true);
 
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('No hay sesión activa. Iniciá sesión nuevamente.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch(`${API_URL}/api/authorize-entry`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(formData)
       });
+
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Error al autorizar entrada');
+        throw new Error(data.message || data.error || 'Error al autorizar entrada');
       }
 
       navigate('/home');
@@ -64,77 +75,19 @@ const AuthorizeEntry = () => {
           <form className="form" onSubmit={handleSubmit}>
             {error && <div className="error-message">{error}</div>}
 
-            <div className="form-group">
-              <FaCar className="icon" />
-              <input
-                  type="text"
-                  name="nombre"
-                  placeholder="First Name"
-                  value={formData.nombre}
-                  onChange={handleChange}
-                  required
-              />
-            </div>
-
-            <div className="form-group">
-              <FaCar className="icon" />
-              <input
-                  type="text"
-                  name="apellido"
-                  placeholder="Last Name"
-                  value={formData.apellido}
-                  onChange={handleChange}
-                  required
-              />
-            </div>
-
-            <div className="form-group">
-              <FaCar className="icon" />
-              <input
-                  type="email"
-                  name="email"
-                  placeholder="Email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-              />
-            </div>
-
-            <div className="form-group">
-              <FaCar className="icon" />
-              <input
-                  type="text"
-                  name="marca"
-                  placeholder="Marca"
-                  value={formData.marca}
-                  onChange={handleChange}
-                  required
-              />
-            </div>
-
-            <div className="form-group">
-              <FaCar className="icon" />
-              <input
-                  type="text"
-                  name="modelo"
-                  placeholder="Modelo"
-                  value={formData.modelo}
-                  onChange={handleChange}
-                  required
-              />
-            </div>
-
-            <div className="form-group">
-              <FaCar className="icon" />
-              <input
-                  type="text"
-                  name="patente"
-                  placeholder="License Plate"
-                  value={formData.patente}
-                  onChange={handleChange}
-                  required
-              />
-            </div>
+            {['nombre', 'apellido', 'email', 'marca', 'modelo', 'patente'].map((field) => (
+                <div className="form-group" key={field}>
+                  <FaCar className="icon" />
+                  <input
+                      type={field === 'email' ? 'email' : 'text'}
+                      name={field}
+                      placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+                      value={formData[field]}
+                      onChange={handleChange}
+                      required
+                  />
+                </div>
+            ))}
 
             <button
                 type="submit"
