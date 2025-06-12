@@ -216,6 +216,8 @@ client.on('message', async (topic, message) => {
                 tiempoPatenteDetectada = Date.now();
                 client.publish('patente/detectada', patente);
                 resultado = await verificarAutorizacion(patente);
+                await registrarAcceso(patente, 'automatico', resultado === 'true' ? 'autorizado' : 'denegado', key);
+
             }
 
             console.log('📡 Publicando resultado:', resultado);
@@ -237,4 +239,19 @@ client.on('message', async (topic, message) => {
             await registrarInfraccionConPatente('DESCONOCIDA');
         }
     }
+    async function registrarAcceso(patente, metodo, resultado, capturaUrl) {
+        const client = new Client(dbConfig);
+        try {
+            await client.connect();
+            await client.query(
+                'INSERT INTO registro_accesos (patente, fecha_hora, metodo, resultado, captura_url) VALUES ($1, NOW(), $2, $3, $4)',
+                [patente, metodo, resultado, capturaUrl]
+            );
+            console.log(`📝 Acceso registrado: ${patente} - ${resultado}`);
+            await client.end();
+        } catch (err) {
+            console.error('❌ Error al guardar acceso:', err);
+        }
+    }
+
 });
