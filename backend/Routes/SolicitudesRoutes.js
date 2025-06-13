@@ -1,12 +1,9 @@
 const express = require('express');
 const router = express.Router();
 
-try {
-    const { responderSolicitudManual } = require('../Controllers/SolicitudesController');
-    console.log("✅ Controller cargado");
-    router.post('/responder-solicitud', responderSolicitudManual);
-} catch (error) {
-    console.error("❌ Error al cargar responderSolicitudManual:", error.message);
-}
+router.post('/responder-solicitud', (req, res) => {
+    console.log("✅ POST /api/responder-solicitud recibido");
+    res.json({ message: 'Solicitud procesada (versión mínima)' });
+});
 
 module.exports = router;
