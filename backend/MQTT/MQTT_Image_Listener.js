@@ -254,30 +254,42 @@ client.on('message', async (topic, message) => {
 
     if (topic === 'acceso/manual') {
         console.log('📥 Solicitud de ingreso manual recibida');
+
         try {
-            const data = JSON.parse(payload);
-            let { patente, timestamp } = data;
+            // 1. Guardar imagen
+            await guardarImagen(payload);
 
-            if ((!patente || patente === 'DESCONOCIDA') && ultimaPatenteDetectada && Date.now() - tiempoPatenteDetectada < 20000) {
-                console.log(`ℹ️ Reasignando patente con última detectada: ${ultimaPatenteDetectada}`);
-                patente = ultimaPatenteDetectada;
-            }
+            // 2. Subir a S3
+            const timestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 15);
+            const s3Key = `capturas/${timestamp}.jpg`;
+            const key = await subirImagenAS3(s3Key);
+            if (!key) return;
 
-            if (!patente || patente === 'NO_DETECTADA') {
-                console.warn('❌ No se pudo determinar la patente');
+            // 3. Detectar patente
+            const patente = await detectarPatenteConRekognition(key);
+            if (patente === 'NO_DETECTADA') {
+                console.warn('⚠️ No se detectó patente, no se guarda la solicitud.');
                 return;
             }
 
-            const clientDB = new Client(dbConfig);
-            await clientDB.connect();
+            // 4. Insertar solicitud en la base
+            const db = new Client(dbConfig);
+            await db.connect();
 
-            await clientDB.query(`
-                INSERT INTO solicitudes_manuales (patente, fecha_hora, estado, imagen_url)
-                VALUES ($1, $2, 'pendiente', $3)
-            `, [patente, timestamp || new Date().toISOString(), ultimaImagenURL]);
+            // Asegurarse de que la patente exista en `vehiculos`
+            await db.query(
+                'INSERT INTO vehiculos (patente) VALUES ($1) ON CONFLICT (patente) DO NOTHING',
+                [patente]
+            );
 
-            console.log(`📝 Solicitud manual guardada para ${patente}`);
-            await clientDB.end();
+            await db.query(
+                'INSERT INTO solicitudes_manuales (patente, fecha_hora, imagen_url, estado) VALUES ($1, NOW(), $2, $3)',
+                [patente, key, 'pendiente']
+            );
+
+            console.log(`📝 Solicitud manual registrada para ${patente}`);
+            await db.end();
+
         } catch (err) {
             console.error('❌ Error procesando solicitud manual:', err);
         }
