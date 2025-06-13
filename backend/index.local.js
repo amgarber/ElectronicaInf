@@ -1,38 +1,46 @@
 const express = require('express');
 const cors = require('cors');
-const app = express();
-const PORT = 5000;
+const listEndpoints = require('express-list-endpoints');
 
-require('dotenv').config(); // Variables locales desde .env
+const app = express();
+const PORT = process.env.PORT || 5050;
+
+require('dotenv').config(); // Variables de entorno
 const pool = require('./db');
 
+// Rutas
 const entryRoutes = require('./Routes/EntryRoutes');
 const authRoutes = require('./Routes/AuthRoutes');
 const loginRoutes = require('./Routes/LoginRoutes');
-const notificationRoutes = require('./Routes/NotificationsRoutes');
+const NotificationsRoutes = require('./Routes/NotificationsRoutes');
 const authorizationsRoutes = require('./Routes/AuthorizationRoutes');
 const profileRoutes  = require('./Routes/ProfileRoutes');
-const solicitudesRoutes = require('./Routes/SolicitudesRoutes');
+const solicitudesRoutes  = require('./Routes/SolicitudesRoutes');
 
-
+// Middleware
 app.use(cors());
 app.use(express.json());
 
+// Ruta básica de prueba
 app.get('/', (req, res) => {
-    res.send('API funcionando correctamente [LOCAL]');
+    res.send('API funcionando correctamente [PRODUCCIÓN]');
 });
 
+// Montaje de rutas
 app.use('/api', authRoutes);
 app.use('/api', entryRoutes);
 app.use('/api', loginRoutes);
-app.use('/api', notificationRoutes);
+app.use('/api', NotificationsRoutes);
 app.use('/api', authorizationsRoutes);
 app.use('/api', profileRoutes);
 app.use('/api', solicitudesRoutes);
 
-
-
-
+// Iniciar servidor
 app.listen(PORT, () => {
     console.log(`🚀 Backend local en http://localhost:${PORT}`);
+
+
+    // Mostrar rutas registradas
+    console.log('📚 Endpoints registrados:');
+    console.table(listEndpoints(app));
 });

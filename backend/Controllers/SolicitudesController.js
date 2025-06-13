@@ -2,7 +2,7 @@ const pool = require('../db');
 const mqtt = require('mqtt');
 
 // Conexión al broker real o local según tu caso
-const client = mqtt.connect('mqtt://54.243.184.8'); // Reemplazá si estás corriendo local
+const client = mqtt.connect('mqtt://54.243.184.8');
 
 const responderSolicitudManual = async (req, res) => {
     const { id, respuesta } = req.body; // respuesta: 'autorizado' o 'denegado'

@@ -3,6 +3,8 @@ import { FaArrowLeft, FaBell } from 'react-icons/fa';
 import '../css/Notifications.css';
 
 const API_URL = process.env.REACT_APP_API_URL;
+console.log("🔍 API_URL desde Notifications.jsx:", API_URL);
+
 
 const Notifications = ({ onBack }) => {
     const [notifications, setNotifications] = useState([]);
@@ -116,6 +118,13 @@ const Notifications = ({ onBack }) => {
                                             />
                                         )}
                                         <div className="action-buttons">
+                                            <button onClick={() => {
+                                                fetch(`${API_URL}/api/test`, { method: 'POST' })
+                                                    .then(res => res.json())
+                                                    .then(data => console.log("✅ Test:", data));
+                                            }}>
+                                                Probar conexión API
+                                            </button>
                                             <button
                                                 className="accept-button"
                                                 onClick={() =>
