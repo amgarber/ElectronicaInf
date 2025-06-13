@@ -34,13 +34,24 @@ let ultimaImagenURL = null;
 function guardarImagen(base64Data) {
     return new Promise((resolve, reject) => {
         const buffer = Buffer.from(base64Data, 'base64');
+
+        if (buffer.length < 1000) {
+            return reject(new Error('Imagen corrupta o incompleta'));
+        }
+
         fs.writeFile(IMAGE_PATH, buffer, (err) => {
             if (err) return reject(err);
             console.log(`✅ Imagen guardada en ${IMAGE_PATH}`);
+
+            // Extra: copia de debug
+            const debugPath = path.join(__dirname, `capturas/debug-${Date.now()}.jpg`);
+            fs.copyFileSync(IMAGE_PATH, debugPath);
+
             resolve();
         });
     });
 }
+
 
 function subirImagenAS3(s3Key) {
     return s3
