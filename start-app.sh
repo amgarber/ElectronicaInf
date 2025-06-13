@@ -1,13 +1,23 @@
 #!/bin/bash
 
-# Levantar Backend
-cd ~/ElectronicaInf/backend
-nohup node index.prod.js > ../backend.log 2>&1 &
+echo "🟢 Iniciando aplicación completa..."
 
-# Levantar Frontend en modo desarrollo (React Dev Server)
-cd ~/ElectronicaInf/frontend
-nohup npm start > ../frontend.log 2>&1 &
+# Ruta absoluta al proyecto
+PROJECT_DIR="/home/ubuntu/ElectronicaInf"
 
-# Levantar Listener MQTT
-cd ~/ElectronicaInf
-nohup node MQTT_Image_Listener.js > mqtt.log 2>&1 &
+# FRONTEND (React)
+echo "▶️ Iniciando frontend React..."
+cd "$PROJECT_DIR/frontend"
+npm start &
+
+# BACKEND (Node.js API)
+echo "▶️ Iniciando backend Node.js..."
+cd "$PROJECT_DIR/backend"
+node index.prod.js &
+
+# MQTT Listener
+echo "▶️ Iniciando listener MQTT..."
+cd "$PROJECT_DIR/mqtt"
+node MQTT_Image_Listener.js &
+
+echo "✅ Todos los servicios fueron lanzados."
