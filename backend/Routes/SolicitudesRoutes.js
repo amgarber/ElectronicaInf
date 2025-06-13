@@ -2,8 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 router.post('/responder-solicitud', (req, res) => {
-    console.log("✅ POST /api/responder-solicitud recibido");
-    res.json({ message: 'Solicitud procesada (versión mínima)' });
+    res.json({ message: `🧠 Esta ruta está definida en: ${__filename}` });
 });
 
 module.exports = router;
