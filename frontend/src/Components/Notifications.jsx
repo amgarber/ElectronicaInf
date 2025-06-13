@@ -51,7 +51,7 @@ const Notifications = ({ onBack }) => {
             const res = await fetch(`${API_URL}/api/responder-solicitud`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ patente, decision }),
+                body: JSON.stringify({ id, respuesta }),
             });
 
             const data = await res.json();
