@@ -203,13 +203,12 @@ async function registrarInfraccionConPatente(patente) {
 // === MQTT ===
 const client = mqtt.connect(MQTT_BROKER);
 
-cclient.on('connect', () => {
+client.on('connect', () => {
     console.log(`🚀 Conectado al broker. Escuchando en:`);
     client.subscribe(MQTT_TOPIC_SUB, () => console.log(`🛰️ Subscrito a ${MQTT_TOPIC_SUB}`));
     client.subscribe('infraccion/velocidad', () => console.log(`🛰️ Subscrito a infraccion/velocidad`));
-    client.subscribe('acceso/manual', () => console.log(`🛰️ Subscrito a acceso/manual`)); // ✅ FALTA ESTA LÍNEA
+    client.subscribe('acceso/manual', () => console.log(`🛰️ Subscrito a acceso/manual`));
 });
-
 
 client.on('message', async (topic, message) => {
     const payload = message.toString();
