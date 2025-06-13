@@ -11,6 +11,8 @@ const Notifications = ({ onBack }) => {
     const [expandedImageIds, setExpandedImageIds] = useState([]);
     const [lastResponse, setLastResponse] = useState(null); // <-- nueva línea
 
+
+
     useEffect(() => {
         const fetchNotifications = async () => {
             try {
@@ -18,7 +20,7 @@ const Notifications = ({ onBack }) => {
                 const data = await res.json();
 
                 const parsed = data.map((n, i) => ({
-                    id: n.id || i,
+                    id: n.id ?? i,
                     title:
                         n.tipo === 'ingreso'
                             ? 'Ingreso'
