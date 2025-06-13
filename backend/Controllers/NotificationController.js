@@ -20,13 +20,15 @@ const getAllNotifications = async (req, res) => {
         `);
 
         const solicitudes = await pool.query(`
-            SELECT 'solicitud_manual' AS tipo,
+            SELECT s.id,  -- ✅ ← AÑADIR ESTA LÍNEA
+                   'solicitud_manual' AS tipo,
                    CONCAT('El vehículo ', s.patente, ' solicita ingreso manual.') AS mensaje,
                    s.fecha_hora,
                    s.imagen_url
             FROM solicitudes_manuales s
             WHERE s.estado = 'pendiente'
         `);
+
 
         const todas = [...accesos.rows, ...infracciones.rows, ...solicitudes.rows].sort(
             (a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora)
