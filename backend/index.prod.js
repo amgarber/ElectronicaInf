@@ -30,7 +30,6 @@ app.use('/api', profileRoutes);
 app.use('/api', solicitudesRoutes);
 
 
-
 app.listen(PORT, () => {
     console.log(`🚀 Backend producción corriendo en http://0.0.0.0:${PORT}`);
 });
