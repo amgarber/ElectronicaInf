@@ -16,7 +16,7 @@ const Notifications = ({ onBack }) => {
                 const data = await res.json();
 
                 const parsed = data.map((n, i) => ({
-                    id: i,
+                    id: n.id || i, // se asegura que cada item tenga un ID
                     title:
                         n.tipo === 'ingreso'
                             ? 'Ingreso'
@@ -46,7 +46,7 @@ const Notifications = ({ onBack }) => {
         );
     };
 
-    const responderSolicitud = async (patente, decision) => {
+    const responderSolicitud = async (id, respuesta) => {
         try {
             const res = await fetch(`${API_URL}/api/responder-solicitud`, {
                 method: 'POST',
@@ -57,7 +57,7 @@ const Notifications = ({ onBack }) => {
             const data = await res.json();
             console.log(data.message);
             setNotifications((prev) =>
-                prev.filter((n) => !(n.tipo === 'solicitud_manual' && n.patente === patente))
+                prev.filter((n) => !(n.tipo === 'solicitud_manual' && n.id === id))
             );
         } catch (err) {
             console.error('Error al responder solicitud:', err);
@@ -119,7 +119,7 @@ const Notifications = ({ onBack }) => {
                                             <button
                                                 className="accept-button"
                                                 onClick={() =>
-                                                    responderSolicitud(notification.patente, 'aceptar')
+                                                    responderSolicitud(notification.id, 'autorizado')
                                                 }
                                             >
                                                 Permitir ingreso
@@ -127,7 +127,7 @@ const Notifications = ({ onBack }) => {
                                             <button
                                                 className="deny-button"
                                                 onClick={() =>
-                                                    responderSolicitud(notification.patente, 'denegar')
+                                                    responderSolicitud(notification.id, 'denegado')
                                                 }
                                             >
                                                 Denegar ingreso
