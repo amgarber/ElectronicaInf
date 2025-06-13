@@ -14,7 +14,7 @@ const BUCKET_NAME = 'esp32-captures';
 // === CONFIGURACIÓN POSTGRES ===
 const dbConfig = {
     host: '172.31.25.254',
-    database: 'control_acceso',
+    database: 'control_accesos',
     user: 'postgres',
     password: 'postgres',
     port: 5432,
@@ -28,18 +28,30 @@ const s3 = new AWS.S3();
 // === VARIABLES DE ESTADO ===
 let ultimaPatenteDetectada = null;
 let tiempoPatenteDetectada = null;
+let ultimaImagenURL = null;
 
 // === FUNCIONES AUXILIARES ===
 function guardarImagen(base64Data) {
     return new Promise((resolve, reject) => {
         const buffer = Buffer.from(base64Data, 'base64');
+
+        if (buffer.length < 1000) {
+            return reject(new Error('Imagen corrupta o incompleta'));
+        }
+
         fs.writeFile(IMAGE_PATH, buffer, (err) => {
             if (err) return reject(err);
             console.log(`✅ Imagen guardada en ${IMAGE_PATH}`);
+
+            // Extra: copia de debug
+            const debugPath = path.join(__dirname, `capturas/debug-${Date.now()}.jpg`);
+            fs.copyFileSync(IMAGE_PATH, debugPath);
+
             resolve();
         });
     });
 }
+
 
 function subirImagenAS3(s3Key) {
     return s3
@@ -125,6 +137,21 @@ async function verificarAutorizacion(patente) {
     }
 }
 
+async function registrarAcceso(patente, metodo, resultado, capturaUrl) {
+    const client = new Client(dbConfig);
+    try {
+        await client.connect();
+        await client.query(
+            'INSERT INTO registro_accesos (patente, fecha_hora, metodo, resultado, captura_url) VALUES ($1, NOW(), $2, $3, $4)',
+            [patente, metodo, resultado, capturaUrl]
+        );
+        console.log(`📝 Acceso registrado: ${patente} - ${resultado}`);
+        await client.end();
+    } catch (err) {
+        console.error('❌ Error al guardar acceso:', err);
+    }
+}
+
 async function registrarInfraccionConPatente(patente) {
     const client = new Client(dbConfig);
     try {
@@ -165,7 +192,6 @@ async function registrarInfraccionConPatente(patente) {
                 console.warn('⚠️ Vehículo sin dueño asociado en la base');
             }
 
-            // 🚫 Bloqueo automático si supera 3 infracciones
             const infracciones = await client.query(
                 'SELECT COUNT(*) FROM infracciones WHERE patente = $1',
                 [patente]
@@ -185,13 +211,14 @@ async function registrarInfraccionConPatente(patente) {
     }
 }
 
-// === MQTT CLIENT ===
+// === MQTT ===
 const client = mqtt.connect(MQTT_BROKER);
 
 client.on('connect', () => {
-    console.log(`🚀 Conectado al broker. Escuchando en ${MQTT_TOPIC_SUB}`);
-    client.subscribe(MQTT_TOPIC_SUB);
-    client.subscribe('infraccion/velocidad');
+    console.log(`🚀 Conectado al broker. Escuchando en:`);
+    client.subscribe(MQTT_TOPIC_SUB, () => console.log(`🛰️ Subscrito a ${MQTT_TOPIC_SUB}`));
+    client.subscribe('infraccion/velocidad', () => console.log(`🛰️ Subscrito a infraccion/velocidad`));
+    client.subscribe('acceso/manual', () => console.log(`🛰️ Subscrito a acceso/manual`));
 });
 
 client.on('message', async (topic, message) => {
@@ -207,6 +234,7 @@ client.on('message', async (topic, message) => {
 
             const key = await subirImagenAS3(s3Key);
             if (!key) return;
+            ultimaImagenURL = key;
 
             const patente = await detectarPatenteConRekognition(key);
 
@@ -216,6 +244,7 @@ client.on('message', async (topic, message) => {
                 tiempoPatenteDetectada = Date.now();
                 client.publish('patente/detectada', patente);
                 resultado = await verificarAutorizacion(patente);
+                await registrarAcceso(patente, 'automatico', resultado === 'true' ? 'autorizado' : 'denegado', key);
             }
 
             console.log('📡 Publicando resultado:', resultado);
@@ -227,14 +256,53 @@ client.on('message', async (topic, message) => {
 
     if (topic === 'infraccion/velocidad') {
         console.log('⚠️ Infracción de velocidad recibida:', payload);
+        const patente = (ultimaPatenteDetectada && Date.now() - tiempoPatenteDetectada < 20000)
+            ? ultimaPatenteDetectada
+            : 'DESCONOCIDA';
 
-        if (
-            ultimaPatenteDetectada &&
-            Date.now() - tiempoPatenteDetectada < 20000
-        ) {
-            await registrarInfraccionConPatente(ultimaPatenteDetectada);
-        } else {
-            await registrarInfraccionConPatente('DESCONOCIDA');
+        await registrarInfraccionConPatente(patente);
+    }
+
+    if (topic === 'acceso/manual') {
+        console.log('📥 Solicitud de ingreso manual recibida');
+
+        try {
+            // 1. Guardar imagen
+            await guardarImagen(payload);
+
+            // 2. Subir a S3
+            const timestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 15);
+            const s3Key = `capturas/${timestamp}.jpg`;
+            const key = await subirImagenAS3(s3Key);
+            if (!key) return;
+
+            // 3. Detectar patente
+            const patente = await detectarPatenteConRekognition(key);
+            if (patente === 'NO_DETECTADA') {
+                console.warn('⚠️ No se detectó patente, no se guarda la solicitud.');
+                return;
+            }
+
+            // 4. Insertar solicitud en la base
+            const db = new Client(dbConfig);
+            await db.connect();
+
+            // Asegurarse de que la patente exista en `vehiculos`
+            await db.query(
+                'INSERT INTO vehiculos (patente) VALUES ($1) ON CONFLICT (patente) DO NOTHING',
+                [patente]
+            );
+
+            await db.query(
+                'INSERT INTO solicitudes_manuales (patente, fecha_hora, imagen_url, estado) VALUES ($1, NOW(), $2, $3)',
+                [patente, key, 'pendiente']
+            );
+
+            console.log(`📝 Solicitud manual registrada para ${patente}`);
+            await db.end();
+
+        } catch (err) {
+            console.error('❌ Error procesando solicitud manual:', err);
         }
     }
 });

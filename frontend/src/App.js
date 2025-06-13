@@ -23,7 +23,9 @@ function App() {
                 <Route path="/home" element={<Home />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/authorize-entry" element={<AuthorizeEntry />} />
+{/*
                 <Route path="/notifications" element={<Notifications />} />
+*/}
                 <Route path="/my-authorizations" element={<MyAuthorizations />} />
             </Routes>
         </Router>

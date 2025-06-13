@@ -3,11 +3,15 @@ import { FaArrowLeft, FaBell } from 'react-icons/fa';
 import '../css/Notifications.css';
 
 const API_URL = process.env.REACT_APP_API_URL;
+console.log("🔍 API_URL desde Notifications.jsx:", API_URL);
 
 const Notifications = ({ onBack }) => {
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [expandedImageIds, setExpandedImageIds] = useState([]);
+    const [lastResponse, setLastResponse] = useState(null); // <-- nueva línea
+
+
 
     useEffect(() => {
         const fetchNotifications = async () => {
@@ -16,7 +20,7 @@ const Notifications = ({ onBack }) => {
                 const data = await res.json();
 
                 const parsed = data.map((n, i) => ({
-                    id: i,
+                    id: n.id ?? i,
                     title:
                         n.tipo === 'ingreso'
                             ? 'Ingreso'
@@ -46,21 +50,26 @@ const Notifications = ({ onBack }) => {
         );
     };
 
-    const responderSolicitud = async (patente, decision) => {
+    const responderSolicitud = async (id, respuesta) => {
         try {
+            console.log(`📤 Enviando solicitud (${respuesta}) para ID:`, id);
+
             const res = await fetch(`${API_URL}/api/responder-solicitud`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ patente, decision }),
+                body: JSON.stringify({ id, respuesta }),
             });
 
             const data = await res.json();
-            console.log(data.message);
+            console.log("📥 Respuesta del backend:", data);
+            setLastResponse(data.message); // <-- mostrarlo en UI
+
             setNotifications((prev) =>
-                prev.filter((n) => !(n.tipo === 'solicitud_manual' && n.patente === patente))
+                prev.filter((n) => !(n.tipo === 'solicitud_manual' && n.id === id))
             );
         } catch (err) {
-            console.error('Error al responder solicitud:', err);
+            console.error('❌ Error al responder solicitud:', err);
+            setLastResponse('❌ Error al responder solicitud');
         }
     };
 
@@ -72,6 +81,12 @@ const Notifications = ({ onBack }) => {
                 </button>
                 <h2>Notifications and Notices</h2>
             </div>
+
+            {lastResponse && (
+                <div className="last-response">
+                    <strong>🧾 Última respuesta:</strong> {lastResponse}
+                </div>
+            )}
 
             {loading ? (
                 <div className="loading">Loading...</div>
@@ -119,7 +134,7 @@ const Notifications = ({ onBack }) => {
                                             <button
                                                 className="accept-button"
                                                 onClick={() =>
-                                                    responderSolicitud(notification.patente, 'aceptar')
+                                                    responderSolicitud(notification.id, 'autorizado')
                                                 }
                                             >
                                                 Permitir ingreso
@@ -127,7 +142,7 @@ const Notifications = ({ onBack }) => {
                                             <button
                                                 className="deny-button"
                                                 onClick={() =>
-                                                    responderSolicitud(notification.patente, 'denegar')
+                                                    responderSolicitud(notification.id, 'denegado')
                                                 }
                                             >
                                                 Denegar ingreso
