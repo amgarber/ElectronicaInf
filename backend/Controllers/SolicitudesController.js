@@ -1,6 +1,8 @@
 const pool = require('../db');
 const mqtt = require('mqtt');
-const client = mqtt.connect('mqtt://localhost'); // o tu broker externo
+
+// Conexión al broker real o local según tu caso
+const client = mqtt.connect('mqtt://54.243.184.8'); // Reemplazá si estás corriendo local
 
 const responderSolicitudManual = async (req, res) => {
     const { id, respuesta } = req.body; // respuesta: 'autorizado' o 'denegado'
@@ -10,7 +12,7 @@ const responderSolicitudManual = async (req, res) => {
     }
 
     try {
-        // 1. Buscar la solicitud
+        // 1. Buscar la solicitud pendiente
         const solicitud = await pool.query(
             `SELECT * FROM solicitudes_manuales WHERE id = $1 AND estado = 'pendiente'`,
             [id]
@@ -20,20 +22,31 @@ const responderSolicitudManual = async (req, res) => {
             return res.status(404).json({ error: 'Solicitud no encontrada o ya respondida' });
         }
 
-        const { patente } = solicitud.rows[0];
+        const { patente, imagen_url } = solicitud.rows[0];
 
-        // 2. Actualizar estado en BD
+        // 2. Actualizar estado en la base
         await pool.query(
-            `UPDATE solicitudes_manuales SET estado = $1 WHERE id = $2`,
+            `UPDATE solicitudes_manuales SET estado = $1, fecha_hora = NOW() WHERE id = $2`,
             [respuesta, id]
         );
 
-        // 3. Publicar mensaje MQTT
+        // 3. Publicar mensaje MQTT con respuesta
         const topic = `acceso/respuesta`;
         client.publish(topic, JSON.stringify({
             patente,
-            respuesta
+            respuesta,
+            metodo: 'manual'
         }));
+
+        // 4. Registrar el acceso si fue autorizado
+        if (respuesta === 'autorizado') {
+            await pool.query(
+                `INSERT INTO registro_accesos (patente, fecha_hora, metodo, resultado, captura_url)
+                 VALUES ($1, NOW(), 'manual', 'autorizado', $2)`,
+                [patente, imagen_url]
+            );
+            console.log(`📝 Acceso manual registrado para ${patente}`);
+        }
 
         res.json({ message: 'Respuesta enviada y solicitud actualizada' });
     } catch (err) {

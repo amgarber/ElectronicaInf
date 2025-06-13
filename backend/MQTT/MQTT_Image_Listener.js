@@ -253,5 +253,32 @@ client.on('message', async (topic, message) => {
             console.error('❌ Error al guardar acceso:', err);
         }
     }
+    if (topic === 'acceso/manual') {
+        console.log('📥 Solicitud de ingreso manual recibida');
+
+        try {
+            const data = JSON.parse(payload);
+            const { patente, timestamp } = data;
+
+            if (!patente) {
+                console.warn('❌ Mensaje manual sin patente');
+                return;
+            }
+
+            const clientDB = new Client(dbConfig);
+            await clientDB.connect();
+
+            await clientDB.query(`
+            INSERT INTO solicitudes_manuales (patente, fecha_hora, estado)
+            VALUES ($1, $2, 'pendiente')
+        `, [patente, timestamp || new Date().toISOString()]);
+
+            console.log(`📝 Solicitud manual guardada para ${patente}`);
+            await clientDB.end();
+        } catch (err) {
+            console.error('❌ Error procesando solicitud manual:', err);
+        }
+    }
+
 
 });
