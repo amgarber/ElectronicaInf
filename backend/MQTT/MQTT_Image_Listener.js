@@ -24,13 +24,10 @@ const dbConfig = {
 AWS.config.update({ region: 'us-east-1' });
 const rekognition = new AWS.Rekognition();
 const s3 = new AWS.S3();
-const publicUrl = `https://${BUCKET_NAME}.s3.amazonaws.com/${s3Key}`;
-
 
 // === VARIABLES DE ESTADO ===
 let ultimaPatenteDetectada = null;
 let tiempoPatenteDetectada = null;
-let ultimaImagenURL = null;
 
 // === FUNCIONES AUXILIARES ===
 function guardarImagen(base64Data) {
@@ -203,6 +200,7 @@ client.on('message', async (topic, message) => {
                 await registrarAcceso(patente, 'automatico', resultado === 'true' ? 'autorizado' : 'denegado', key);
                 client.publish(MQTT_TOPIC_PUB, resultado);
             } else {
+                const publicUrl = `https://${BUCKET_NAME}.s3.amazonaws.com/${key}`;
                 const db = new Client(dbConfig);
                 await db.connect();
                 await db.query('INSERT INTO vehiculos (patente) VALUES ($1) ON CONFLICT (patente) DO NOTHING', [patente]);
