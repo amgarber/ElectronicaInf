@@ -1,4 +1,7 @@
 const pool = require('../db');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const SECRET = process.env.JWT_SECRET;
 
 const registrarUsuario = async (req, res) => {
     const { nombre, apellido, email, password } = req.body;
@@ -8,11 +11,38 @@ const registrarUsuario = async (req, res) => {
     }
 
     try {
+        // Hashear la contraseña antes de guardarla
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         const result = await pool.query(
             'INSERT INTO usuarios (nombre, apellido, email, password) VALUES ($1, $2, $3, $4) RETURNING *',
-            [nombre, apellido, email, password]
+            [nombre, apellido, email, hashedPassword]
         );
-        res.status(201).json({ message: 'Usuario creado', usuario: result.rows[0] });
+
+        const usuario = result.rows[0];
+
+        // Generar token JWT
+        const token = jwt.sign(
+            {
+                id: usuario.id,
+                email: usuario.email,
+                nombre: usuario.nombre
+            },
+            SECRET,
+            { expiresIn: '1h' }
+        );
+
+        res.status(201).json({
+            message: 'Usuario creado',
+            usuario: {
+                id: usuario.id,
+                nombre: usuario.nombre,
+                apellido: usuario.apellido,
+                email: usuario.email
+            },
+            token
+        });
+
     } catch (err) {
         console.error('Error al insertar usuario:', err);
         res.status(500).json({ error: 'Error interno del servidor' });
