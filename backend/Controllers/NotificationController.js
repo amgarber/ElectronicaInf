@@ -1,5 +1,6 @@
-// === BACKEND: notificationsController.js ===
 const pool = require('../db');
+
+const BUCKET_URL = 'https://esp32-captures.s3.amazonaws.com/';
 
 const getAllNotifications = async (req, res) => {
     try {
@@ -7,7 +8,8 @@ const getAllNotifications = async (req, res) => {
             SELECT 'ingreso' AS tipo,
                    CONCAT('El vehículo ', ra.patente, ' ingresó correctamente.') AS mensaje,
                    ra.fecha_hora,
-                   NULL AS imagen_url
+                   NULL AS imagen_url,
+                   ra.id AS id  -- para clave única
             FROM registro_accesos ra
         `);
 
@@ -15,12 +17,13 @@ const getAllNotifications = async (req, res) => {
             SELECT 'infraccion' AS tipo,
                    CONCAT('Infracción registrada para el vehículo ', i.patente, ': ', i.descripcion) AS mensaje,
                    i.fecha_hora,
-                   NULL AS imagen_url
+                   NULL AS imagen_url,
+                   i.id AS id
             FROM infracciones i
         `);
 
         const solicitudes = await pool.query(`
-            SELECT s.id,  -- ✅ ← AÑADIR ESTA LÍNEA
+            SELECT s.id,
                    'solicitud_manual' AS tipo,
                    CONCAT('El vehículo ', s.patente, ' solicita ingreso manual.') AS mensaje,
                    s.fecha_hora,
@@ -29,10 +32,19 @@ const getAllNotifications = async (req, res) => {
             WHERE s.estado = 'pendiente'
         `);
 
+        // 🔧 Completamos la URL de imagen en solicitudes
+        const solicitudesConUrl = solicitudes.rows.map(s => ({
+            ...s,
+            imagen_url: s.imagen_url?.startsWith('http')
+                ? s.imagen_url
+                : `${BUCKET_URL}${s.imagen_url}`
+        }));
 
-        const todas = [...accesos.rows, ...infracciones.rows, ...solicitudes.rows].sort(
-            (a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora)
-        );
+        const todas = [
+            ...accesos.rows,
+            ...infracciones.rows,
+            ...solicitudesConUrl
+        ].sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
 
         res.json(todas);
     } catch (error) {

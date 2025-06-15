@@ -9,9 +9,7 @@ const Notifications = ({ onBack }) => {
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [expandedImageIds, setExpandedImageIds] = useState([]);
-    const [lastResponse, setLastResponse] = useState(null); // <-- nueva línea
-
-
+    const [lastResponse, setLastResponse] = useState(null);
 
     useEffect(() => {
         const fetchNotifications = async () => {
@@ -62,7 +60,7 @@ const Notifications = ({ onBack }) => {
 
             const data = await res.json();
             console.log("📥 Respuesta del backend:", data);
-            setLastResponse(data.message); // <-- mostrarlo en UI
+            setLastResponse(data.message);
 
             setNotifications((prev) =>
                 prev.filter((n) => !(n.tipo === 'solicitud_manual' && n.id === id))
@@ -72,13 +70,13 @@ const Notifications = ({ onBack }) => {
             setLastResponse('❌ Error al responder solicitud');
         }
     };
+
     const getFullImageUrl = (url) => {
         if (!url) return '';
         return url.startsWith('http')
             ? url
             : `https://esp32-captures.s3.amazonaws.com/${url}`;
     };
-
 
     return (
         <div className="notifications-section">
@@ -99,7 +97,10 @@ const Notifications = ({ onBack }) => {
             ) : (
                 <div className="notifications-list">
                     {notifications.map((notification) => (
-                        <div key={`${notification.id}-${notification.tipo}`} className="notification-card">
+                        <div
+                            key={`${notification.id}-${notification.tipo}`}
+                            className="notification-card"
+                        >
                             <div className="notification-info">
                                 <h3>{notification.title}</h3>
                                 <p>
@@ -122,34 +123,34 @@ const Notifications = ({ onBack }) => {
                                     {new Date(notification.date).toLocaleString()}
                                 </p>
 
+                                {expandedImageIds.includes(notification.id) &&
+                                    notification.imageUrl && (
+                                        <img
+                                            src={getFullImageUrl(notification.imageUrl)}
+                                            alt="Imagen adjunta"
+                                            className="notification-image"
+                                        />
+                                    )}
+
                                 {notification.tipo === 'solicitud_manual' && (
-                                    <>
-                                        {expandedImageIds.includes(notification.id) && (
-                                            <img
-                                                src={getFullImageUrl(notification.imageUrl)}
-                                                alt="Solicitud ingreso"
-                                                className="notification-image"
-                                            />
-                                        )}
-                                        <div className="action-buttons">
-                                            <button
-                                                className="accept-button"
-                                                onClick={() =>
-                                                    responderSolicitud(notification.id, 'autorizado')
-                                                }
-                                            >
-                                                Permitir ingreso
-                                            </button>
-                                            <button
-                                                className="deny-button"
-                                                onClick={() =>
-                                                    responderSolicitud(notification.id, 'denegado')
-                                                }
-                                            >
-                                                Denegar ingreso
-                                            </button>
-                                        </div>
-                                    </>
+                                    <div className="action-buttons">
+                                        <button
+                                            className="accept-button"
+                                            onClick={() =>
+                                                responderSolicitud(notification.id, 'autorizado')
+                                            }
+                                        >
+                                            Permitir ingreso
+                                        </button>
+                                        <button
+                                            className="deny-button"
+                                            onClick={() =>
+                                                responderSolicitud(notification.id, 'denegado')
+                                            }
+                                        >
+                                            Denegar ingreso
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         </div>
