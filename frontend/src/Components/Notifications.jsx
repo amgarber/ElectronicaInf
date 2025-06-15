@@ -72,6 +72,13 @@ const Notifications = ({ onBack }) => {
             setLastResponse('❌ Error al responder solicitud');
         }
     };
+    const getFullImageUrl = (url) => {
+        if (!url) return '';
+        return url.startsWith('http')
+            ? url
+            : `https://esp32-captures.s3.amazonaws.com/${url}`;
+    };
+
 
     return (
         <div className="notifications-section">
@@ -119,7 +126,7 @@ const Notifications = ({ onBack }) => {
                                     <>
                                         {expandedImageIds.includes(notification.id) && (
                                             <img
-                                                src={notification.imageUrl}
+                                                src={getFullImageUrl(notification.imageUrl)}
                                                 alt="Solicitud ingreso"
                                                 className="notification-image"
                                             />
