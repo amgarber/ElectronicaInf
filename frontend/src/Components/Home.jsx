@@ -118,41 +118,7 @@ const Home = () => {
 
 
       case 'incidents':
-        return (
-            <div className="incidents-section">
-              <div className="section-header">
-                <button className="back-button" onClick={() => setCurrentView('home')}>
-                  <FaArrowLeft /> Back
-                </button>
-                <h2>Incidents</h2>
-              </div>
-              {loading ? (
-                  <div className="loading">Loading...</div>
-              ) : incidents.length === 0 ? (
-                  <div className="no-incidents">
-                    <FaExclamationTriangle className="no-incident-icon" />
-                    <p>No incidents reported.</p>
-                  </div>
-              ) : (
-                  <div className="incidents-list">
-                    {incidents.map((incident) => (
-                        <div key={incident.id} className="incident-card">
-                          <div className="incident-info">
-                            <h3>{incident.type}</h3>
-                            <p>{incident.description}</p>
-                            <div className="incident-details">
-                        <span className={`status ${incident.status.toLowerCase()}`}>
-                          {incident.status}
-                        </span>
-                              <span className="date">{new Date(incident.date).toLocaleDateString()}</span>
-                            </div>
-                          </div>
-                        </div>
-                    ))}
-                  </div>
-              )}
-            </div>
-        );
+        return <Incidents onBack={() => setCurrentView('home')} />;
       default:
         return null;
     }

@@ -17,6 +17,7 @@ const NotificationsRoutes = require('./Routes/NotificationsRoutes');
 const authorizationsRoutes = require('./Routes/AuthorizationRoutes');
 const profileRoutes  = require('./Routes/ProfileRoutes');
 const solicitudesRoutes  = require('./Routes/SolicitudesRoutes');
+const infraccionesRoutes = require('./Routes/InfraccionesRoutes');
 
 // Middleware
 app.use(cors());
@@ -35,6 +36,7 @@ app.use('/api', NotificationsRoutes);
 app.use('/api', authorizationsRoutes);
 app.use('/api', profileRoutes);
 app.use('/api', solicitudesRoutes);
+app.use('/api/infracciones', infraccionesRoutes);
 app.post('/api/test', (req, res) => {
     console.log("✅ Se recibió POST a /api/test");
     res.json({ mensaje: 'Funciona!' });

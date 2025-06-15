@@ -16,6 +16,7 @@ const NotificationsRoutes = require('./Routes/NotificationsRoutes');
 const authorizationsRoutes = require('./Routes/AuthorizationRoutes');
 const profileRoutes  = require('./Routes/ProfileRoutes');
 const solicitudesRoutes  = require('./Routes/SolicitudesRoutes');
+const infraccionesRoutes = require('./Routes/InfraccionesRoutes');
 
 // Middleware
 app.use(cors());
@@ -34,6 +35,7 @@ app.use('/api', NotificationsRoutes);
 app.use('/api', authorizationsRoutes);
 app.use('/api', profileRoutes);
 app.use('/api', solicitudesRoutes);
+app.use('/api/infracciones', infraccionesRoutes);
 
 // Iniciar servidor
 app.listen(PORT, () => {
