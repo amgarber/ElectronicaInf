@@ -33,7 +33,7 @@ const responderSolicitudManual = async (req, res) => {
         );
 
         // Enviar por MQTT
-        const topic = `acceso/respuesta`;
+        const topic = `acceso/autorizado`;
         const payload = JSON.stringify({ patente, respuesta, metodo: 'manual' });
         client.publish(topic, payload);
         console.log(`📡 Publicado en ${topic}:`, payload);
