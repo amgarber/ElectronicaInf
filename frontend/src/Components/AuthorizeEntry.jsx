@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaCar } from 'react-icons/fa';
 import '../css/AuthorizeEntry.css';
 
-const API_URL = 'http://localhost:3000'
+const API_URL = process.env.REACT_APP_API_URL;
 
 const AuthorizeEntry = () => {
   const navigate = useNavigate();
