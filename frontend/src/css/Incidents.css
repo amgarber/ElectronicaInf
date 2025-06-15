@@ -1,0 +1,94 @@
+/* Incidents.css */
+
+.incidents-section {
+    padding: 1rem;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.back-button {
+    background-color: transparent;
+    border: none;
+    color: #007bff;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.back-button:hover {
+    text-decoration: underline;
+}
+
+.incidents-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.incident-card {
+    background-color: #ffffff;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.incident-info h3 {
+    margin: 0 0 0.5rem;
+    color: #dc3545;
+}
+
+.incident-info p {
+    margin: 0.25rem 0;
+    font-size: 0.95rem;
+}
+
+.incident-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
+.incident-details .status {
+    padding: 0.25rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.status.pendiente {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status.resuelto {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.date {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.no-incidents {
+    text-align: center;
+    color: #6c757d;
+    padding: 2rem;
+}
+
+.no-incident-icon {
+    font-size: 2rem;
+    color: #ffc107;
+    margin-bottom: 0.5rem;
+}
