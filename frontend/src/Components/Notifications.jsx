@@ -82,12 +82,6 @@ const Notifications = ({ onBack }) => {
                 <h2>Notifications and Notices</h2>
             </div>
 
-            {lastResponse && (
-                <div className="last-response">
-                    <strong>🧾 Última respuesta:</strong> {lastResponse}
-                </div>
-            )}
-
             {loading ? (
                 <div className="loading">Loading...</div>
             ) : notifications.length === 0 ? (
