@@ -99,7 +99,7 @@ const Notifications = ({ onBack }) => {
             ) : (
                 <div className="notifications-list">
                     {notifications.map((notification) => (
-                        <div key={notification.id} className="notification-card">
+                        <div key={`${notification.id}-${notification.tipo}`} className="notification-card">
                             <div className="notification-info">
                                 <h3>{notification.title}</h3>
                                 <p>
