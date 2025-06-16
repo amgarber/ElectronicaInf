@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { FaLock, FaArrowLeft } from 'react-icons/fa';
 import '../css/ChangePassword.css';
+import {useNavigate} from "react-router-dom";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
 const ChangePassword = ({ onBack, onSuccess }) => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
