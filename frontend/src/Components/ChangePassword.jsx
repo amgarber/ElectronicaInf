@@ -61,7 +61,7 @@ const ChangePassword = ({ onBack, onSuccess }) => {
 
   return (
     <div className="change-password-container">
-      <button className="back-button" onClick={onBack}>
+      <button className="back-button" onClick={() => navigate('/profile')}>
         <FaArrowLeft /> Volver
       </button>
       
