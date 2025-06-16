@@ -42,12 +42,12 @@ const Register = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Error al registrar usuario');
+        throw new Error(data.message || 'El nombre de usuario o correo electrónico ya está en uso');
       }
 
       setSuccess(true);
     } catch (err) {
-      setError(err.message || 'Error al registrar usuario');
+      setError(err.message || 'El nombre de usuario o correo electrónico ya está en uso');
     } finally {
       setLoading(false);
     }
