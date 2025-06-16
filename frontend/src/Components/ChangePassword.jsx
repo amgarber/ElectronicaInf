@@ -33,7 +33,7 @@ const ChangePassword = ({ onBack, onSuccess }) => {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('No hay sesión activa');
 
-      const response = await fetch(`${API_URL}/api/change-password`, {
+      const response = await fetch(`${API_URL}/api/ChangePassword`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
