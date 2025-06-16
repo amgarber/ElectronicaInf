@@ -10,6 +10,9 @@ import AuthorizeEntry from './Components/AuthorizeEntry';
 import Notifications from "./Components/Notifications";
 import Profile from "./Components/Profile";
 import MyAuthorizations from "./Components/MyAuthorizations";
+import ChangePassword from './Components/ChangePassword';
+
+
 
 
 
@@ -23,6 +26,8 @@ function App() {
                 <Route path="/home" element={<Home />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/authorize-entry" element={<AuthorizeEntry />} />
+                <Route path="/change-password" element={<ChangePassword />} />
+
 {/*
                 <Route path="/notifications" element={<Notifications />} />
 */}

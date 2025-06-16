@@ -97,8 +97,8 @@ const Profile = () => {
                     className="change-password-button"
                     onClick={() => {
                       console.log("🟡 Botón 'Change Password' clickeado");
-                      setShowChangePassword(true);
-                      navigate('/ChangePassword');
+                      navigate('/change-password');
+
                     }}
                 >
                   <FaLock /> Change Password
