@@ -111,8 +111,8 @@ async function registrarAcceso(patente, metodo, resultado, capturaUrl) {
         const { rows } = await client.query(
             `SELECT u.nombre AS nombre_usuario, p.nombre AS nombre_autorizado
              FROM vehiculos v
-             LEFT JOIN usuarios u ON v.dueno_usuario_id = u.id
-             LEFT JOIN personas_autorizadas p ON v.dueno_autorizado_id = p.id
+                      LEFT JOIN usuarios u ON v.dueno_usuario_id = u.id
+                      LEFT JOIN personas_autorizadas p ON v.dueno_autorizado_id = p.id
              WHERE v.patente = $1`,
             [patente]
         );
@@ -129,11 +129,14 @@ async function registrarAcceso(patente, metodo, resultado, capturaUrl) {
         );
         await client.end();
 
-        console.log(`📝 Ingreso: ${nombre} ingresó con el vehículo ${patente} - ${resultado}`);
+        const mensaje = `${nombre} ingresó con el vehículo ${patente} - ${resultado}`;
+        console.log(`📝 Ingreso: ${mensaje}`);
+        clientMQTT.publish('notificacion/acceso', mensaje);
     } catch (err) {
         console.error('❌ Error al guardar acceso:', err);
     }
 }
+
 
 async function registrarInfraccionConPatente(patente) {
     const client = new Client(dbConfig);
@@ -175,7 +178,7 @@ async function registrarInfraccionConPatente(patente) {
             } else {
                 await client.query(
                     'INSERT INTO infracciones (descripcion, tipo, patente, fecha_hora) VALUES ($1, $2, $3, NOW())',
-                    ['Exceso de velocidad - sin dueño asociado', 'velocidad', patente]
+                    ['Exceso de velocidad', 'velocidad', patente]
                 );
             }
 
