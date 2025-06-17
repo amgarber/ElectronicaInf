@@ -133,7 +133,7 @@ const Home = () => {
               <FaCar size={24} className="text-accent" />
               <span>DriveIn</span>
             </div>
-            <p className="slogan">Smart access, simple movement!</p>
+            <p className="slogan">Smart access, seamless movement!</p>
           </div>
           <button className="logout-button" onClick={handleLogout}>
             <FaSignOutAlt /> Logout
