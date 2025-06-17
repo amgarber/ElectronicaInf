@@ -106,12 +106,30 @@ async function registrarAcceso(patente, metodo, resultado, capturaUrl) {
     const client = new Client(dbConfig);
     try {
         await client.connect();
+
+        let nombre = 'Dueño desconocido';
+        const { rows } = await client.query(
+            `SELECT u.nombre AS nombre_usuario, p.nombre AS nombre_autorizado
+             FROM vehiculos v
+             LEFT JOIN usuarios u ON v.dueno_usuario_id = u.id
+             LEFT JOIN personas_autorizadas p ON v.dueno_autorizado_id = p.id
+             WHERE v.patente = $1`,
+            [patente]
+        );
+
+        if (rows.length > 0) {
+            const row = rows[0];
+            if (row.nombre_usuario) nombre = row.nombre_usuario;
+            else if (row.nombre_autorizado) nombre = row.nombre_autorizado;
+        }
+
         await client.query(
             'INSERT INTO registro_accesos (patente, fecha_hora, metodo, resultado, captura_url) VALUES ($1, NOW(), $2, $3, $4)',
             [patente, metodo, resultado, capturaUrl]
         );
         await client.end();
-        console.log(`📝 Acceso registrado: ${patente} - ${resultado}`);
+
+        console.log(`📝 Ingreso: ${nombre} ingresó con el vehículo ${patente} - ${resultado}`);
     } catch (err) {
         console.error('❌ Error al guardar acceso:', err);
     }
@@ -133,15 +151,26 @@ async function registrarInfraccionConPatente(patente) {
             );
         } else {
             const { dueno_usuario_id, dueno_autorizado_id } = rows[0];
+
             if (dueno_usuario_id) {
+                const nombreRes = await client.query(
+                    'SELECT nombre FROM usuarios WHERE id = $1',
+                    [dueno_usuario_id]
+                );
+                const nombre = nombreRes.rows[0]?.nombre || 'Usuario desconocido';
                 await client.query(
                     'INSERT INTO infracciones (id_usuario, descripcion, tipo, patente, fecha_hora) VALUES ($1, $2, $3, $4, NOW())',
-                    [dueno_usuario_id, 'Exceso de velocidad', 'velocidad', patente]
+                    [dueno_usuario_id, `Exceso de velocidad - ${nombre}`, 'velocidad', patente]
                 );
             } else if (dueno_autorizado_id) {
+                const nombreRes = await client.query(
+                    'SELECT nombre FROM personas_autorizadas WHERE id = $1',
+                    [dueno_autorizado_id]
+                );
+                const nombre = nombreRes.rows[0]?.nombre || 'Persona autorizada desconocida';
                 await client.query(
                     'INSERT INTO infracciones (descripcion, tipo, patente, fecha_hora) VALUES ($1, $2, $3, NOW())',
-                    [`Exceso de velocidad - persona autorizada ID ${dueno_autorizado_id}`, 'velocidad', patente]
+                    [`Exceso de velocidad - ${nombre}`, 'velocidad', patente]
                 );
             } else {
                 await client.query(
