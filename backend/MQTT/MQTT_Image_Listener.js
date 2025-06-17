@@ -103,12 +103,12 @@ async function verificarAutorizacion(patente) {
 }
 
 async function registrarAcceso(patente, metodo, resultado, capturaUrl) {
-    const client = new Client(dbConfig);
+    const dbClient = new Client(dbConfig);
     try {
-        await client.connect();
+        await dbClient.connect();
 
         let nombre = 'Dueño desconocido';
-        const { rows } = await client.query(
+        const { rows } = await dbClient.query(
             `SELECT u.nombre AS nombre_usuario, p.nombre AS nombre_autorizado
              FROM vehiculos v
                       LEFT JOIN usuarios u ON v.dueno_usuario_id = u.id
@@ -123,20 +123,23 @@ async function registrarAcceso(patente, metodo, resultado, capturaUrl) {
             else if (row.nombre_autorizado) nombre = row.nombre_autorizado;
         }
 
-        await client.query(
+        await dbClient.query(
             'INSERT INTO registro_accesos (patente, fecha_hora, metodo, resultado, captura_url) VALUES ($1, NOW(), $2, $3, $4)',
             [patente, metodo, resultado, capturaUrl]
         );
-        await client.end();
+        await dbClient.end();
 
-        const mensaje = `${nombre} ingresó con el vehículo ${patente} - ${resultado}`;
-        console.log(`📝 Ingreso: ${mensaje}`);
-        clientMQTT.publish('notificacion/acceso', mensaje);
+        const mensaje = {
+            nombre,
+            patente,
+            estado: resultado
+        };
+        console.log(`📝 Ingreso: ${nombre} ingresó con el vehículo ${patente} - ${resultado}`);
+        client.publish('notificacion/acceso', JSON.stringify(mensaje));
     } catch (err) {
         console.error('❌ Error al guardar acceso:', err);
     }
 }
-
 
 async function registrarInfraccionConPatente(patente) {
     const client = new Client(dbConfig);
