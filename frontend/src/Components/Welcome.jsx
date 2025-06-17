@@ -12,7 +12,7 @@ const Welcome = () => {
         <FaCar size={48} className="logo-icon" />
         <h1>DriveIn</h1>
       </div>
-      <p className="welcome-text">Welcome to DriveIn - Your smart parking solution!</p>
+      <p className="welcome-text">Welcome to DriveIn - Smart access, simple movement!</p>
       <div className="button-group">
         <button className="Button1" onClick={() => navigate('/login')}>Login</button>
         <button  className="Button1" onClick={() => navigate('/register')}>Register</button>
