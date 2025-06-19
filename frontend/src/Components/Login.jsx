@@ -102,11 +102,6 @@ const Login = () => {
           <p className="register-link">
             Don't have an account? <span onClick={() => navigate('/register')}>Register</span>
           </p>
-          <p className="test-credentials">
-            Test credentials:<br />
-            Email: test@test.com<br />
-            Password: test123
-          </p>
         </form>
       </div>
   );
